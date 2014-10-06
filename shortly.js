@@ -2,6 +2,9 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var session = require('express-session');
+var cookieParser = require('cookie-parser');
+var bcrypt = require('bcrypt-nodejs');
 
 
 var db = require('./app/config');
@@ -20,27 +23,62 @@ app.use(partials());
 app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({
+  secret: 'yo'
+}));
+
 app.use(express.static(__dirname + '/public'));
 
 
-app.get('/', 
+app.get('/login',
+function(req, res) {
+  res.render('login');
+});
+
+app.get('/signup',
+function(req, res) {
+  res.render('signup');
+});
+
+app.get('/', restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', 
+app.get('/create', restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links', restrict,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', 
+// app.post('/login',
+// function(req, res) {
+//   var username = req.body.username;
+//   var password = req.body.password;
+//   var salt = bcrypt.genSaltSync(10);
+//   var hash = bcrypt.hashSync(password, salt);
+//   // below is for mongo connection. change it.
+//   var userObj = Users.fetch()
+
+//   if(userObj){
+//     req.session.regenerate(function(){
+//       req.session.user = userObj.username;
+//       res.redirect('/restricted');
+//     });
+//   }
+//   else {
+//     res.redirect('login');
+//   }
+// });
+
+
+app.post('/links', restrict,
 function(req, res) {
   var uri = req.body.url;
 
@@ -78,6 +116,14 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+function restrict(request, response, next){
+    //if user has a current valid session, then allow to proceed
+    if(request.session.user){
+      next();
+    }else{
+      response.redirect('/login');
+    }
+}
 
 
 /************************************************************/
