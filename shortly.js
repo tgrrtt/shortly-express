@@ -57,25 +57,48 @@ function(req, res) {
   });
 });
 
-// app.post('/login',
-// function(req, res) {
-//   var username = req.body.username;
-//   var password = req.body.password;
-//   var salt = bcrypt.genSaltSync(10);
-//   var hash = bcrypt.hashSync(password, salt);
-//   // below is for mongo connection. change it.
-//   var userObj = Users.fetch()
+app.post('/login',
+function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  var salt;
+  new User({username: username})
+    .fetch()
+    .then(function(model) {
+      var hash = model.get('hash');
+      var salt = model.get('salt');
+      // decrypt using hash and salt
+      // if it == password, then do stuff
+      var hashedPass = bcrypt.hashSync(password, salt);
+      if(hash === hashedPass){
+        // req.session.regenerate(function(){
+        //   req.session.user = userObj.username;
+          //res.redirect('/restricted');
+        // });
+        res.redirect('http://google.com');
+      } else {
+        //res.redirect('login');
+        console.log("nice try buddy");
+      }
+    }).catch(function() {
+      res.send("you dont exist");
+    });
+});
 
-//   if(userObj){
-//     req.session.regenerate(function(){
-//       req.session.user = userObj.username;
-//       res.redirect('/restricted');
-//     });
-//   }
-//   else {
-//     res.redirect('login');
-//   }
-// });
+app.post('/signup',
+function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  var salt = bcrypt.genSaltSync(10);
+  var hash = bcrypt.hashSync(password, salt);
+  console.log(salt);
+  // below is for mongo connection. change it.
+  // var userObj = Users.fetch();
+  new User({username: username, hash: hash, salt: salt}).save().then(function(model) {
+    res.redirect('/login');
+  });
+
+});
 
 
 app.post('/links', restrict,
