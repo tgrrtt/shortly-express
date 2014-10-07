@@ -50,6 +50,7 @@ function(req, res) {
   res.render('index');
 });
 
+
 app.get('/links', restrict,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
@@ -97,6 +98,12 @@ function(req, res) {
 
 });
 
+app.get('/logout',
+function(req, res) {
+  req.session.destroy(function(err) {
+    res.redirect('/login');
+  });
+});
 
 app.post('/links', restrict,
 function(req, res) {
