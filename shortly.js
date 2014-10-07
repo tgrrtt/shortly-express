@@ -67,21 +67,18 @@ function(req, res) {
     .then(function(model) {
       var hash = model.get('hash');
       var salt = model.get('salt');
-      // decrypt using hash and salt
-      // if it == password, then do stuff
       var hashedPass = bcrypt.hashSync(password, salt);
       if(hash === hashedPass){
-        // req.session.regenerate(function(){
-        //   req.session.user = userObj.username;
-          //res.redirect('/restricted');
-        // });
-        res.redirect('http://google.com');
+        req.session.regenerate(function(){
+          req.session.user = username;
+          res.redirect('/');
+        });
       } else {
         //res.redirect('login');
-        console.log("nice try buddy");
+        res.end();
       }
     }).catch(function() {
-      res.send("you dont exist");
+      res.redirect('/login');
     });
 });
 
@@ -91,11 +88,11 @@ function(req, res) {
   var password = req.body.password;
   var salt = bcrypt.genSaltSync(10);
   var hash = bcrypt.hashSync(password, salt);
-  console.log(salt);
-  // below is for mongo connection. change it.
-  // var userObj = Users.fetch();
   new User({username: username, hash: hash, salt: salt}).save().then(function(model) {
-    res.redirect('/login');
+    req.session.regenerate(function(){
+          req.session.user = username;
+          res.redirect('/');
+        });
   });
 
 });
@@ -139,12 +136,12 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
-function restrict(request, response, next){
+function restrict(req, res, next){
     //if user has a current valid session, then allow to proceed
-    if(request.session.user){
+    if(req.session.user){
       next();
     }else{
-      response.redirect('/login');
+      res.redirect('/login');
     }
 }
 
